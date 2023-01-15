@@ -1,6 +1,0 @@
-  /home/vlab/dykim/neopjuki-v2/src:
-  total used in directory 16 available 63112296
-  drwxrwxr-x 2 vlab vlab 4096 Jan 15 15:22 .
-  drwxrwxr-x 4 vlab vlab 4096 Jan 15 13:45 ..
-* -rw-rw-r-- 1 vlab vlab  132 Jan 15 13:03 mcts.py
-* -rw-rw-r-- 1 vlab vlab  576 Jan 15 15:22 model.py

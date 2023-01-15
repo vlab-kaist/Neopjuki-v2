@@ -6,8 +6,9 @@ class Node(object):
         super().__init__()
         self.parent = parent
         self.childs = []
-        self.wr = None
-
+        self.visits = 1
+        self.wins = 0
+        
 
 
 class MCTS(object):
