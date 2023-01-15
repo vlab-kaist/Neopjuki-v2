@@ -1,12 +1,14 @@
 import torch
 import torch.nn as nn
 
+# For importing the configuration from config.yaml
+
 
 class block(nn.Module):
-    def __init__(self,in_dim, mid_dim, out_dim):
-        self.conv1 = nn.Conv2d(in_dim, mid_dim, kernel_size=3, padding=1)
+    def __init__(self, dims: tuple):
+        self.conv1 = nn.Conv2d(dims[0], dims[1], kernel_size=3, padding=1)
         self.relu1 = nn.ReLU()
-        self.conv2 = nn.Conv2d(mid_dim, out_dim, kernel_size=3, padding=1)
+        self.conv2 = nn.Conv2d(dims[1], dims[2], kernel_size=3, padding=1)
         self.relu2 = nn.ReLU()
         
     def forward(self, inp):
@@ -15,10 +17,16 @@ class block(nn.Module):
         
 
 
-
-
 class stm(nn.Module):
-    def __init__(self,block_num=5,):
-        pass
+    def __init__(self, block_num: int, block_dim: tuple):
+        self.net = nn.ModuleList()
+        for _ in range(block_num):
+            self.net.append(block(block_dim))
+
+        self.policy_head = None
+        self.value_head = nn.Linear()
+        
     def forward(self, inp):
+        out = self.net(inp)
         pass
+    
