@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-
+# Should add the configuration file setting from hydra configuration
 
 class block(nn.Module):
     def __init__(self, dims: tuple):
