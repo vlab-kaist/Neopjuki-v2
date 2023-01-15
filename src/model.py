@@ -19,19 +19,25 @@ class block(nn.Module):
 
 
 class stm(nn.Module):
-    def __init__(self, block_num: int, block_dims: list[tuple]):
+    def __init__(self, input_shape: tuple, block_num: int,
+                 block_dims: list[tuple], value_dim: int):
         self.net = nn.ModuleList()
+        self.wall_eval = nn.Linear(2,1)
         for i in range(block_num):
             self.net.append(block(block_dims[i]))
 
-        self.policy_head = None
-        self.value_head = nn.Linear()
+        self.policy_head = nn.Softmax()
+        self.value_head = nn.Sequential(
+            nn.Linear(block_dims[-1][2], value_dim),
+            nn.Linear(value_dim, 1)
+            )
         
-    def forward(self, inp):
+    def forward(self, inp, remaining_wall):
         out = self.net(inp)
         out_for_v = F.flatten(out)
-
-        return self.policy_head(out), self.value_head(out_for_v) # Will not work until set
+        wall_eval = self.wall_eval(remaining_wall)
+        
+        return self.policy_head(wall_eval*out), self.value_head(wall_eval*out_for_v)
     
 
 
