@@ -46,6 +46,6 @@ if __name__ == '__main__':
     
     rand_t = torch.randn(1,1,19,19).to(device)
     ex_block_dim = (1,10,30)
-    Block1 = block(ex_block_dim).to(device)
+    block_t = block(ex_block_dim).to(device)
     print(f'Input shape of randomly generated data is: {rand_t.size()}')
-    print(f'Output shape of residual block has shape {ex_block_dim} is {Block1(rand_t).size()}')
+    print(f'Output shape of residual block has shape {ex_block_dim} is {block_t(rand_t).size()}')
