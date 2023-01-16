@@ -7,9 +7,11 @@ import torch.nn.functional as F
 class block(nn.Module):
     def __init__(self, dims: tuple):
         super().__init__()
-        self.conv1 = nn.Conv2d(dims[0], dims[1], kernel_size=3, padding=1)
+        self.conv1 = nn.Conv2d(dims[0], dims[1], kernel_size=3,
+                               padding=1)
         self.relu1 = nn.ReLU()
-        self.conv2 = nn.Conv2d(dims[1], dims[2], kernel_size=3, padding=1)
+        self.conv2 = nn.Conv2d(dims[1], dims[2], kernel_size=3,
+                               padding=1)
         self.relu2 = nn.ReLU()
         
     def forward(self, inp):
@@ -22,22 +24,23 @@ class stm(nn.Module):
     def __init__(self, input_shape: tuple, block_num: int,
                  block_dims: list[tuple], value_dim: int):
         self.net = nn.ModuleList()
-        self.wall_eval = nn.Linear(2,1)
+        
         for i in range(block_num):
             self.net.append(block(block_dims[i]))
 
-        self.policy_head = nn.Softmax()
+        self.policy_head = nn.Softmax(dim=1)
         self.value_head = nn.Sequential(
             nn.Linear(block_dims[-1][2], value_dim),
             nn.Linear(value_dim, 1)
             )
         
-    def forward(self, inp, remaining_wall):
+    def forward(self, inp):
+        
         out = self.net(inp)
         out_for_v = F.flatten(out)
-        wall_eval = self.wall_eval(remaining_wall)
         
-        return self.policy_head(wall_eval*out), self.value_head(wall_eval*out_for_v)
+        
+        return self.policy_head(out),self.value_head(out_for_v)
     
 
 
