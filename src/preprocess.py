@@ -1,6 +1,8 @@
 import torch
 import numpy as np
 
+from joblib import hash as h
+
 def preprocessor(inps, max_walls=10):
     np_ones = np.ones(shape=inps.board[0].shape)
     np_zeros = np.zeros(shape=inps.board[0].shape)
@@ -21,8 +23,8 @@ def preprocessor(inps, max_walls=10):
     
     return board
 
-
-
+def hashing_state(preprocessed_state):
+    return h(preprocessed_state)
 
 
 if __name__ == '__main__':
@@ -30,5 +32,7 @@ if __name__ == '__main__':
     from fights.envs import puoribor
     env = puoribor.PuoriborEnv()
     state = env.initialize_state()
-    for i, val in enumerate(preprocessor(state)):
+    preprocessed_state = preprocessor(state)
+    for i, val in enumerate(preprocessed_state):
         print(i, val)
+    print(f'The result of hashing the state: {hashing_state(preprocessed_state)}')

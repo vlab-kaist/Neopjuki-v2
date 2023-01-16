@@ -5,7 +5,9 @@
 
 - [X] Design STM for puribor
 
-- [X] Add preprocess.py to put data
+- [X] Add preprocessor function in preprocess.py to make puriborstate to be fitted on stm
+
+- [X] Add hashing_state function in preprocess.py to index much faster
 
 - [ ] Set hydra configuration for all files
 
