@@ -1,4 +1,6 @@
 import torch
+from fights.envs import puoribor
+from preprocess import preprocessor
 from preprocess import hashing_state
 
 
@@ -15,10 +17,17 @@ class Node(object):
 
 
 class MCTS(object):
-    def __init__(self, ):
+    def __init__(self, stm, ):
+        super().__init__()
+        self.stm = stm
+
+    def UCT(self, ):
         pass
 
-    def selexpand():
+    def select(self, ):
+        pass
+
+    def expand():
         pass
 
     def backpropagate():
