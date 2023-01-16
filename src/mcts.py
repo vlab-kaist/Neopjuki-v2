@@ -8,9 +8,9 @@ class Node(object):
     def __init__(self, state, parent):
         super().__init__()
         self.state = state # this state should be original state.
-        self.parent = parent # Node
+        self.parent = parent # Node, -1 for root
         self.address = hashing_state(state) 
-        self.childs = []
+        self.childs = {}
         self.visits = 1
         self.wins = 0
         
@@ -19,17 +19,14 @@ class Node(object):
 class MCTS(object):
     def __init__(self, stm, initial_state=None):
         super().__init__()
-        device_name = 'cpu'
-        if torch.cuda.is_available():
-            device_name = "cuda:0"
         
-        self.stm = stm.to(torch.device(device_name))
+        self.stm = stm
         self.env = puoribor.PuoriborEnv()
         
         if initial_state != None:
-            self.startingNode = Node(initial_state, None)
+            self.current = Node(initial_state, -1)
         else:
-            self.startingNode = Node(self.env.initialize_state(), None)
+            self.current = Node(self.env.initialize_state(), -1)
 
     def UCT(self, ):
         pass
@@ -37,7 +34,12 @@ class MCTS(object):
     def select(self, ):
         pass
 
-    def expand():
+    def expand(self, state):
+        new_node = Node(state, self.current)
+        self.current.child[new_node.address] = new_node
+        self.current = new_node
+
+    def simulate(self):
         pass
 
     def backpropagate():

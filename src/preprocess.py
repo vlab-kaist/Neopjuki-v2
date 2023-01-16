@@ -50,3 +50,4 @@ if __name__ == '__main__':
     for i, val in enumerate(preprocessed_state):
         print(i, val)
     print(f'The result of hashing the state: {hashing_state(preprocessed_state)}')
+    
