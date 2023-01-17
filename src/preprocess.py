@@ -41,11 +41,11 @@ if __name__ == '__main__':
     state = env.initialize_state()
     preprocessed_state = preprocessor(state,0)
     for i, val in enumerate(preprocessed_state):
-        print(i, val)
+        print(i+1, val)
     print(f'The result of hashing the state: {hashing_state(preprocessed_state)} at agent_id: {0}')
 
     preprocessed_state = preprocessor(state,1)
     for i, val in enumerate(preprocessed_state):
-        print(i, val)
+        print(i+1, val)
     print(f'The result of hashing the state: {hashing_state(preprocessed_state)} at agent_id: {1}')
     
