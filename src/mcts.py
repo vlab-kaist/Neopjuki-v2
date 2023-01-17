@@ -1,4 +1,4 @@
-import ray
+import math
 import torch
 from fights.envs import puoribor
 from preprocess import preprocessor
@@ -30,53 +30,118 @@ class MCTS(object):
         self.temp = temp
         self.sim_num = sim_num
         self.env = puoribor.PuoriborEnv()
-        self.actions_cache = generate_actions()
+        self.actions_cache = generate_actions((4,9,9))
         
         if initial_state != None:
-            self.root = Node(first, initial_state, -1, -1)
-           
+            self.root = Node(first, initial_state, -1, -1)           
         else:
             self.root = Node(first, self.env.initialize_state(), -1, -1)
 
         
-    def UCT(self): # Calculate all possible scores from actions
-        pass
+    def UCT(self, node):
+        
+        if len(node.childs):
+            return (node.wins / node.visits) + self.temp*self.pi*(math.sqrt(node.parent.visits)/(1+node.visits))
+        else:
+            return node.parent.wins / node.parent.visits + self.temp*self.pi*(math.sqrt(node.parent.visits)/(1+node.visits))
+        
 
-    def select(self, node):
-        ## Should Implement from here ##
-        if 
+    def select(self):
+        
+        current = self.root
+        while len(current.childs):
+            keys = []
+            uct_val = []
+            for key, val in current.childs.item():
+                uct_val.append(UCT(val))
+                keys.append(key)
+            current = current.childs[keys[np.array(uct_val).argmax()]]
+            current.visits += 1
+        return current
     
     def expand(self, node): # all possible states 
         assert len(node.childs) == 0 # Check this is the leaf node
-        pol, val = self.stm(torch.Tensor(preprocessor(node.state, node.turn+1), device=self.stm.device))
+        pol, val = self.stm(torch.Tensor(preprocessor(node.state, (node.turn+1)%2)).unsqueeze(0)) # should add matching cuda or cpu
+        pol = pol.flatten()
+        pis = []
+        nodes = []
         states = []
-        for action in self.actions_cache:
+        actions = []
+
+        prep_states = []
+        
+        for i, action in enumerate(self.actions_cache):
             try:
                 states.append(self.env.step(node.state, node.turn, action))
+                actions.append(action)
+                pis.append(pol[i])
+
             except ValueError:
                 pass
         
-        for state in states:
-            new_node = Node((turn+1)%2, state, node)
+        for i, state in enumerate(states):
+            new_node = Node((node.turn+1)%2, state,actions[i], node)
+            new_node.pi = pis[i]
             node.childs[new_node.address] = new_node
+            nodes.append(new_node)
+            prep_states.append((state, new_node.turn))
+        return prep_states, nodes, val
 
-    @ray.remote
-    def simulate(self, state, turn):
-        starting_point = turn
+    def simulate(self, preps):
+        env = puoribor.PuoriborEnv()
+        starting_point = preps[1]
+        state = preps[0]
+
+        turn = preps[1]
+
         while state.done == False:
-            pol, val = self.stm(torch.Tensor(preprocessor(state, turn),device=self.stm.device))
-            action = puoribor.PuoriborAction((pol==torch.max(pol)).nonzero().squeeze().detach().cpu().numpy()) # this part should be changed as randomly selected.
-            state = self.env.step(state, turn, action)
+            pol, val = self.stm(torch.Tensor(preprocessor(preps[0], preps[1])).unsqueeze(0))
+            pol = pol.squeeze()
+            action = (pol==torch.max(pol)).nonzero().squeeze().detach().cpu().numpy() 
+            try:
+                state = env.step(state, turn, action)
+                print(state)
+                
+            except ValueError:
+                print(action)
+                return -1
             turn = (turn+1)%2
         if turn == starting_point:
             return -1
         elif turn != starting_point:
             return 1
-        
+
     
-    def backpropagate(self):
-        pass
+    
+    def backpropagate(self, node, win):
+        assert node.visits == 1
+
+        node.wins = win
+        absolute_turn = node.turn
+        while node.parent == -1:
+            if node.parent.turn != absolute_turn:
+                node.parent.wins += ((win+1) % 2)
+            elif node.parent.turn == absolute_turn:
+                node.parent.wins += (win % 2)
+            
+            node = node.parent
+
+
 
     
 
+if __name__ == '__main__':
+    import time
+    from model import stm
+
+    stm = stm((25, 9, 9), 1, [(25,32,4)], 256)
+    mcts = MCTS(stm, 1.4, 10)
+
+    leaf = mcts.select()
+    
+    prep_states, nodes, val = mcts.expand(leaf)
+    print(val)
+    print(nodes[68].state)
+    for preps in prep_states:
+        print(mcts.simulate(preps))
 
