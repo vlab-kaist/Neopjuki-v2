@@ -1,3 +1,4 @@
+import ray
 import math
 import torch
 from fights.envs import puoribor
@@ -97,15 +98,18 @@ class MCTS(object):
         while state.done == False:
             pol, val = self.stm(torch.Tensor(preprocessor(preps[0], preps[1])).unsqueeze(0))
             pol = pol.squeeze()
-            action = (pol==torch.max(pol)).nonzero().squeeze().detach().cpu().numpy() 
+            index = int(torch.multinomial(torch.flatten(pol), 1))
+            action = (index//81,index//9,index&9)
+            
             try:
                 state = env.step(state, turn, action)
                 print(state)
-                
-            except ValueError:
                 print(action)
-                return -1
-            turn = (turn+1)%2
+                turn = (turn+1)%2
+            except ValueError:
+                pass
+            
+            
         if turn == starting_point:
             return -1
         elif turn != starting_point:
@@ -142,6 +146,6 @@ if __name__ == '__main__':
     prep_states, nodes, val = mcts.expand(leaf)
     print(val)
     print(nodes[68].state)
-    for preps in prep_states:
-        print(mcts.simulate(preps))
+    
+    mcts.simulate(prep_states[20])
 
