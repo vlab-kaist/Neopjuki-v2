@@ -12,7 +12,7 @@ class Node(object):
         self.turn = turn
         self.state = state # this state should be original state.
         self.action = action
-        self.address = hashing_state(state)
+        self.address = hashing_state(state, turn)
 
         self.childs = {}
         self.parent = parent # Node, -1 for root
@@ -42,16 +42,22 @@ class MCTS(object):
     def UCT(self): # Calculate all possible scores from actions
         pass
 
-    def select(self):
+    def select(self, node):
         ## Should Implement from here ##
-        pass
+        if 
     
     def expand(self, node): # all possible states 
         assert len(node.childs) == 0 # Check this is the leaf node
-        pol, val = self.stm(torch.Tensor(preprocessor(node.state, node.turn+1),device=self.stm.device))
+        pol, val = self.stm(torch.Tensor(preprocessor(node.state, node.turn+1), device=self.stm.device))
+        states = []
+        for action in self.actions_cache:
+            try:
+                states.append(self.env.step(node.state, node.turn, action))
+            except ValueError:
+                pass
         
         for state in states:
-            new_node = Node(node.turn+1, state, node)
+            new_node = Node((turn+1)%2, state, node)
             node.childs[new_node.address] = new_node
 
     @ray.remote
@@ -61,10 +67,7 @@ class MCTS(object):
             pol, val = self.stm(torch.Tensor(preprocessor(state, turn),device=self.stm.device))
             action = puoribor.PuoriborAction((pol==torch.max(pol)).nonzero().squeeze().detach().cpu().numpy()) # this part should be changed as randomly selected.
             state = self.env.step(state, turn, action)
-            if turn == 0:
-                turn = 1
-            elif turn == 1:
-                turn = 0
+            turn = (turn+1)%2
         if turn == starting_point:
             return -1
         elif turn != starting_point:
