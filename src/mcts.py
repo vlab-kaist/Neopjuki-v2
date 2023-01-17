@@ -1,6 +1,7 @@
 import ray
 import math
 import torch
+import random
 from fights.envs import puoribor
 from preprocess import preprocessor
 from preprocess import hashing_state
@@ -99,7 +100,7 @@ class MCTS(object):
             pol, val = self.stm(torch.Tensor(preprocessor(preps[0], preps[1])).unsqueeze(0))
             pol = pol.squeeze()
             index = int(torch.multinomial(torch.flatten(pol), 1))
-            action = (index//81,index//9,index&9)
+            action = (index//81,index//9,index%9)
             
             try:
                 state = env.step(state, turn, action)
