@@ -8,13 +8,11 @@ def preprocessor(inps, agent_id, max_walls=10):
     np_zeros = np.zeros(shape=inps.board[0].shape)
     arrays = []
     if agent_id == 0:
-        arrays = [inps.board[0],inps.board[1],inps.board[4],inps.board[5]]
+        arrays = [inps.board[0], inps.board[1], inps.board[4], inps.board[5]]
         
     elif agent_id == 1:
-        arrays = [np.rot90(inps.board[1],2), np.rot90(inps.board[0],2),
-                  np.pad(np.rot90(inps.board[4], 2)[1:, 1:],((0, 1), (0, 1)), constant_values=0,),
-                  np.pad(np.rot90(inps.board[5], 2)[1:, 1:],((0, 1), (0, 1)), constant_values=0,)]
-        
+        arrays = [inps.board[1], inps.board[0], inps.board[4], inps.board[5]]
+    
     for i in range(max_walls):
         if i+1 == inps.walls_remaining[0]:
             arrays.append(np_ones)
@@ -44,10 +42,10 @@ if __name__ == '__main__':
     preprocessed_state = preprocessor(state,0)
     for i, val in enumerate(preprocessed_state):
         print(i, val)
-    print(f'The result of hashing the state: {hashing_state(preprocessed_state)}')
+    print(f'The result of hashing the state: {hashing_state(preprocessed_state)} at agent_id: {0}')
 
     preprocessed_state = preprocessor(state,1)
     for i, val in enumerate(preprocessed_state):
         print(i, val)
-    print(f'The result of hashing the state: {hashing_state(preprocessed_state)}')
+    print(f'The result of hashing the state: {hashing_state(preprocessed_state)} at agent_id: {1}')
     

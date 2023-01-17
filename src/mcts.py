@@ -13,36 +13,49 @@ class Node(object):
         self.childs = {}
         self.visits = 1
         self.wins = 0
-        
+
+
 
 
 class MCTS(object):
-    def __init__(self, stm, initial_state=None):
+    def __init__(self, stm, temp, initial_state=None):
         super().__init__()
         
         self.stm = stm
+        self.temp = temp
         self.env = puoribor.PuoriborEnv()
+        
         
         if initial_state != None:
             self.current = Node(initial_state, -1)
         else:
             self.current = Node(self.env.initialize_state(), -1)
 
-    def UCT(self, ):
-        pass
+    def UCT(self, states): # Calculate all possible scores from actions 
+        self.temp*self.stm(preprocessor(self.current.state, ))
 
-    def select(self, ):
-        pass
+    def select(self):
+        ## Should Implement from here ##
+        
 
-    def expand(self, state):
-        new_node = Node(state, self.current)
-        self.current.child[new_node.address] = new_node
-        self.current = new_node
+        
+        if len(self.current.childs) == 0: # Check this is the leaf node
+            return None
+        else:
+            pass
+
+    def expand(self, states): # all possible states 
+        assert len(self.current.childs) == 0 # Check this is the leaf node
+        for state in states:
+            new_node = Node(state, self.current)
+            self.current.child[new_node.address] = new_node
+        
 
     def simulate(self):
+        assert len(self.current.childs) == 0 # Check this is the leaf node
         pass
 
-    def backpropagate():
+    def backpropagate(self):
         pass
 
     
