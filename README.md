@@ -15,5 +15,7 @@
 
 - [ ] Experiments stuff 
 
+## Acknowledgements
 
+Thanks to [Junyeong Park](https://github.com/frechele) for helpful discussion about AlphaZero and other MCTS with Neural Networks based Methods.
 

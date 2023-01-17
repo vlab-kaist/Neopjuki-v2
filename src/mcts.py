@@ -18,11 +18,12 @@ class Node(object):
 
 
 class MCTS(object):
-    def __init__(self, stm, temp, initial_state=None):
+    def __init__(self, stm, temp, sim_num, initial_state=None):
         super().__init__()
         
         self.stm = stm
         self.temp = temp
+        self.sim_num = sim_num
         self.env = puoribor.PuoriborEnv()
         
         
@@ -31,8 +32,8 @@ class MCTS(object):
         else:
             self.current = Node(self.env.initialize_state(), -1)
 
-    def UCT(self, states): # Calculate all possible scores from actions 
-        self.temp*self.stm(preprocessor(self.current.state, ))
+    def UCT(self): # Calculate all possible scores from actions
+        pass
 
     def select(self):
         ## Should Implement from here ##
