@@ -1,7 +1,13 @@
+env:
+  name: 'puoribor'
+  board_size: 9
+  action_space: (4, 9, 9)
+  max_walls: 10
 
 stm:
   block_num: 5
   block_dims: [(4,32,64),(64,128,192),(192,192,192),(192,192,192),(192,192,4)]
+  saving_point: 'checkpoints/puoribor/'
 
 
 mcts:
@@ -9,4 +15,3 @@ mcts:
   sim_num: 1000
 
 
-saving_point: 'checkpoints/'
