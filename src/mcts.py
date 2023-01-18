@@ -25,12 +25,11 @@ class Node(object):
         
 
 class MCTS(object):
-    def __init__(self, device, stm, temp, sim_num, first=0, initial_state=None):
+    def __init__(self, stm, temp, sim_num, first=0, initial_state=None):
         super().__init__()
 
-        self.device = device
         
-        self.stm = stm.to(device)
+        self.stm = stm
         self.temp = temp
         self.sim_num = sim_num
         self.env = puoribor.PuoriborEnv()
@@ -67,7 +66,7 @@ class MCTS(object):
     
     def expand(self, node): # all possible states 
         assert len(node.childs) == 0 # Check this is the leaf node
-        pol, val = self.stm(torch.Tensor(preprocessor(node.state, (node.turn+1)%2)).unsqueeze(0).to(self.device))
+        pol, val = self.stm(torch.Tensor(preprocessor(node.state, (node.turn+1)%2)).unsqueeze(0))
         pol = pol.flatten()
         pis = []
         nodes = []
@@ -144,7 +143,7 @@ class MCTS(object):
             node = node.parent
 
 
-@ray.remote(num_gpus=1)
+@ray.remote
 def simulate(stm, preps):
     env = puoribor.PuoriborEnv()
     starting_point = preps[1]
@@ -153,7 +152,7 @@ def simulate(stm, preps):
     turn = preps[1]
 
     while state.done == False:
-        pol, val = stm(torch.Tensor(preprocessor(preps[0], preps[1])).unsqueeze(0).to(device0))
+        pol, val = stm(torch.Tensor(preprocessor(preps[0], preps[1])).unsqueeze(0))
         pol = pol.squeeze()
         index = int(torch.multinomial(torch.flatten(pol), 1))
         action = (index//81,index//9,index%9)
@@ -176,32 +175,17 @@ if __name__ == '__main__':
     from tqdm import tqdm
     from model import stm
 
-    device0 = torch.device("cuda:0")
-    device1 = torch.device("cuda:1")
+    
     stm = stm((25, 9, 9), input_channel=25, p_output_channel=4, filters=192, block_num=5, value_dim=256)
-    
-    mcts = MCTS(device0, stm, 1.4, 10)
-
-    leaf = mcts.select()
-    
-    prep_states, nodes, val = mcts.expand(leaf)
-
-    results = []
-    '''
-    a = time.time()
-    for prep in tqdm(prep_states):
-        results.append(mcts.simulate(prep))
-        
-    print(f'time: {time.time()-a}')
-    '''
 
     ray.init()
     
-    mcts = MCTS(device0, stm, 1.4, 10)
+    mcts = MCTS(stm, 1.4, 10)
     leaf = mcts.select()
-    stm.to(device0)
     prep_states, nodes, val = mcts.expand(leaf)
     a = time.time()
     futures = [simulate.remote(stm, prep) for prep in prep_states]
+
     print(ray.get(futures))
+    
     print(f'time: {time.time()-a}')
