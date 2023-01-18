@@ -19,3 +19,5 @@ mcts:
   sim_num: 1000
 
 
+hardware:
+  num_cpus: 8

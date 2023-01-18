@@ -25,12 +25,13 @@ class Node(object):
         
 
 class MCTS(object):
-    def __init__(self, stm, temp, sim_num, first=0, initial_state=None):
+    def __init__(self, stm, temp, sim_num, max_iter=50, first=0, initial_state=None):
         super().__init__()
 
         
         self.stm = stm
         self.temp = temp
+        self.max_iter=max_iter
         self.sim_num = sim_num
         self.env = puoribor.PuoriborEnv()
         self.actions_cache = generate_actions((4,9,9))
@@ -44,13 +45,18 @@ class MCTS(object):
 
         
     def UCT(self, node):
-        
-        if len(node.childs):
-            return (node.wins / node.visits) + self.temp*self.pi*(math.sqrt(node.parent.visits)/(1+node.visits))
-        else:
-            return node.parent.wins / node.parent.visits + self.temp*self.pi*(math.sqrt(node.parent.visits)/(1+node.visits))
-        
+        q_val = 0
+        u_val = self.temp*self.pi*(math.sqrt(node.parent.visits)/(1+node.visits))
 
+        if len(node.childs):
+            q_val = (node.wins / node.visits)
+                
+        else:
+            q_val = (node.parent.wins / node.parent.visits)
+
+        return q_val + u_val
+
+    
     def select(self):
         
         current = self.root
@@ -93,7 +99,6 @@ class MCTS(object):
         return prep_states, nodes, val
 
     def simulate(self, preps):
-        env = puoribor.PuoriborEnv()
         starting_point = preps[1]
         state = preps[0]
 
@@ -106,7 +111,7 @@ class MCTS(object):
             action = (index//81,index//9,index%9)
             
             try:
-                state = env.step(state, turn, action)
+                state = self.env.step(state, turn, action)
                 turn = (turn+1)%2
             except ValueError:
                 pass
@@ -144,23 +149,26 @@ class MCTS(object):
 
 
 @ray.remote
-def simulate(stm, preps):
-    env = puoribor.PuoriborEnv()
+def simulate(env, stm, preps):
+    
     starting_point = preps[1]
     state = preps[0]
 
     turn = preps[1]
-
+    i = 0
     while state.done == False:
         pol, val = stm(torch.Tensor(preprocessor(preps[0], preps[1])).unsqueeze(0))
         pol = pol.squeeze()
         index = int(torch.multinomial(torch.flatten(pol), 1))
         action = (index//81,index//9,index%9)
-
+    
         try:
+            if(i > 1000):
+                return 0
             state = env.step(state, turn, action)
             turn = (turn+1)%2
         except ValueError:
+            i += 1
             pass
     if turn == starting_point:
         return -1
@@ -177,15 +185,30 @@ if __name__ == '__main__':
 
     
     stm = stm((25, 9, 9), input_channel=25, p_output_channel=4, filters=192, block_num=5, value_dim=256)
+    
 
     ray.init()
     
+    env_id = ray.put(puoribor.PuoriborEnv())
+    stm_id = ray.put(stm)
     mcts = MCTS(stm, 1.4, 10)
     leaf = mcts.select()
     prep_states, nodes, val = mcts.expand(leaf)
-    a = time.time()
-    futures = [simulate.remote(stm, prep) for prep in prep_states]
+    print(len(prep_states))
 
-    print(ray.get(futures))
+    num_cpus = 8
+
+    a = time.time()
+
+    result_list = []
+    leng = len(prep_states)//num_cpus
+    for i in tqdm(range(leng+1)):
+        if i == leng:
+            result_list.append(ray.get([simulate.remote(env_id, stm_id, prep) for prep in prep_states[num_cpus*leng:]]))
+        else:
+            result_list.append(ray.get([simulate.remote(env_id, stm_id, prep) for prep in prep_states[num_cpus*i:num_cpus*(i+1)]]))
+    print(result_list)
+    
+    
     
     print(f'time: {time.time()-a}')
