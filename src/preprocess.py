@@ -9,21 +9,33 @@ def preprocessor(inps, agent_id, max_walls=10):
     arrays = []
     if agent_id == 0:
         arrays = [np_zeros, inps.board[0], inps.board[1], inps.board[4], inps.board[5]]
-        
+
+        for i in range(max_walls):
+            if i+1 == inps.walls_remaining[0]:
+                arrays.append(np_ones)
+            else:
+                arrays.append(np_zeros)
+
+        for i in range(max_walls):
+            if i+1 == inps.walls_remaining[1]:
+                arrays.append(np_ones)
+            else:
+                arrays.append(np_zeros)
+    
     elif agent_id == 1:
         arrays = [np_ones, inps.board[1], inps.board[0], inps.board[4], inps.board[5]]
-    
-    for i in range(max_walls):
-        if i+1 == inps.walls_remaining[0]:
-            arrays.append(np_ones)
-        else:
-            arrays.append(np_zeros)
 
-    for i in range(max_walls):
-        if i+1 == inps.walls_remaining[1]:
-            arrays.append(np_ones)
-        else:
-            arrays.append(np_zeros)
+        for i in range(max_walls):
+            if i+1 == inps.walls_remaining[1]:
+                arrays.append(np_ones)
+            else:
+                arrays.append(np_zeros)
+
+        for i in range(max_walls):
+            if i+1 == inps.walls_remaining[0]:
+                arrays.append(np_ones)
+            else:
+                arrays.append(np_zeros)
         
     board = np.stack(arrays, axis=0)
     

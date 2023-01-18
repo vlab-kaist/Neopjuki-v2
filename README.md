@@ -13,7 +13,7 @@
 
 - [ ] MCTS
 
-- [ ] parallelized simulate function
+- [X] parallelized simulate function
 
 - [ ] Experiments stuff 
 
