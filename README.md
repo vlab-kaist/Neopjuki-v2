@@ -13,6 +13,8 @@
 
 - [ ] MCTS
 
+- [ ] parallelized simulate function
+
 - [ ] Experiments stuff 
 
 ## Acknowledgements

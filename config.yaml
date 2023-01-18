@@ -1,15 +1,18 @@
 env:
   name: 'puoribor'
   board_size: 9
-  action_space: (4, 9, 9)
-  max_walls: 10
+  max_walls: 10 
 
 stm:
+  filters: 192
   block_num: 5
-  block_dims: [(25,32,64),(64,128,192),(192,192,192),(192,192,192),(192,192,4)]
   value_dim: 256
+  input_channel: 25
+  output_channel: 4
+  
   saving_point: 'checkpoints/puoribor/'
-
+  inference: 0
+  training: 1
 
 mcts:
   temp: 1.414
