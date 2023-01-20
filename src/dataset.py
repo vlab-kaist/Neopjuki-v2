@@ -23,7 +23,7 @@ class SupervisedDataset(Dataset):
             self.x_data, self.y_data = generate_cache(cpath)
             hf = h5py.File(cpath+h5, 'w')
             hf.create_dataset("xdata", shape=(0, 25, 9, 9), maxshape=(None, 25, 9, 9), dtype=np.float32, compression='lzf')
-            hf.create_dataset("ydata", shape=(0, 3), maxshape=(None, 3), dtype=np.float32, compression='lzf')
+            hf.create_dataset("ydata", shape=(0, 4, 9, 9), maxshape=(None, 4, 9, 9), dtype=np.float32, compression='lzf')
 
             orig_length = hf["xdata"].shape[0]
             hf["xdata"].resize(orig_length + len(self.x_data), axis=0)
@@ -39,10 +39,12 @@ class SupervisedDataset(Dataset):
     def __getitem__(self, idx):
         x = self.x_data[idx]
         y = self.y_data[idx]
-        return list(x), list(y)
+        return x, y
 
 if __name__ == '__main__':
     pdataset = SupervisedDataset()
     traindataloader = DataLoader(pdataset)
     for i, (state, action) in enumerate(traindataloader):
-        print(state, action)
+        print(state.shape)
+        print(action.shape)
+        breakpoint()

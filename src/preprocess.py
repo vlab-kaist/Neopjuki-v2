@@ -98,6 +98,7 @@ def p_data(env_id, lines):
     
     x_list = list()
     y_list = list()
+    
 
     for (n, line) in enumerate(lines):
         if line[0] == "#": 
@@ -111,7 +112,9 @@ def p_data(env_id, lines):
             for (iter, action) in enumerate(actions):
                 preprocessed = preprocessor(state, iter % 2)
                 x_list.append(preprocessed)
-                y_list.append(action)
+                action_basis = np.zeros((4,9,9))
+                action_basis[action[0]][action[1]][action[2]]+=1
+                y_list.append(action_basis)
                 state = env_id.step(state, iter % 2, action)
 
         except:
