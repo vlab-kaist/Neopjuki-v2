@@ -6,3 +6,4 @@ fights==0.7.0
 wandb==0.13.9
 joblib==1.2.0
 hydra-core==1.3
+pickle5>=0.0.10

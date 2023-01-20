@@ -10,7 +10,7 @@ stm:
   input_channel: 25
   output_channel: 4
   
-  saving_point: 'checkpoints/puoribor/'
+  saving_point: 'checkpoints/pretrained/'
   inference: 0
   training: 1
 
@@ -24,6 +24,6 @@ hardware:
 
 
 pretraining:
-  lr: 1e-4
+  lr: 1e-6
   epochs: 100
   batch_size: 2048
