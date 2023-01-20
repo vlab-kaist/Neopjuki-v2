@@ -21,3 +21,9 @@ mcts:
 
 hardware:
   num_cpus: 8
+
+
+pretraining:
+  lr: 1e-4
+  epochs: 100
+  batch_size: 2048

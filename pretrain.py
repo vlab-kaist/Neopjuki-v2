@@ -1,5 +1,7 @@
+import os
 import wandb
 import torch
+from tqdm import tqdm
 import torch.nn as nn
 from src.model import stm
 from torch.optim import Adam
@@ -18,15 +20,20 @@ pretraining_conf = conf['pretraining']
 
 stm_conf = conf['stm']
 
-ds = SupervisedDataset()
+ds = SupervisedDataset('data/')
 
 train_size = int(0.8*len(ds))
 test_size = len(ds) - train_size
 
 train_ds, test_ds = random_split(ds, [train_size, test_size])
 
-trainloader = Dataloader(train_ds, batch_size=pretraining_conf['batch_size'], shuffle=True)
-testloader = Dataloader(test_ds, batch_size=pretraining_conf['batch_size'], shuffle=False)
+trainloader = DataLoader(train_ds, batch_size=pretraining_conf['batch_size'], shuffle=True, num_workers=8)
+testloader = DataLoader(test_ds, batch_size=pretraining_conf['batch_size'], shuffle=False, num_workers=8)
+
+
+
+
+
 
 device = torch.device("cuda:0")
 
@@ -41,8 +48,31 @@ epochs = pretraining_conf['epochs']
 
 
 for epoch in range(epochs):
+    valid_loss=0
+    stm.train()
     for batch_num, (state, action) in enumerate(trainloader):
+        optim.zero_grad()
         state = state.to(device)
+        target = action.to(device)
+        output = stm(state)
+        
+        loss = kl_loss(output[0], target)
+        print(f' percentage:{(batch_num/len(trainloader))*100:.2f}%, loss:{loss.item()}')
+        loss.backward()
+        optim.step()
+
+    for batch_num, (state, action) in tqdm(enumerate(testloader)):
+        stm.eval()
+        state = state.to(device)
+        target = action.to(device)
+        output = stm(state)
+        
+        loss = kl_loss(output[0], target)
+        valid_loss += loss.item()
+        print(f'percentage: {(batch_num/len(testloader))*100:.2f}%')
+    
+    print(f'average loss on epoch:{epoch}, loss:{valid_loss / len(trainloader)}')
+        
         
 
 

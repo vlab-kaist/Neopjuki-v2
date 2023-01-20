@@ -55,7 +55,7 @@ class stm(nn.Module):
 
         self.net.append(conv1x1block(filters, p_output_channel))
         
-        self.policy_head = nn.Softmax(dim=1)
+        self.policy_head = nn.LogSoftmax(dim=1)
         self.value_head = nn.Sequential(
             nn.Linear(p_output_channel*input_shape[1]*input_shape[2], value_dim),
             nn.Linear(value_dim, 1),
@@ -67,7 +67,7 @@ class stm(nn.Module):
         for net in self.net:
             out = net(out)
         
-        out_for_v = torch.flatten(out)
+        out_for_v = out.view(-1,324)
         
         return self.policy_head(out), self.value_head(out_for_v)
     
