@@ -9,7 +9,7 @@ class convblock(nn.Sequential):
         super().__init__(
             nn.Conv2d(input_channel, out_channels, kernel_size=3, padding=1),
             nn.BatchNorm2d(out_channels),
-            nn.ReLU(inplace=True)
+            nn.ReLU()
         )
         
 class conv1x1block(nn.Sequential):
@@ -17,7 +17,7 @@ class conv1x1block(nn.Sequential):
         super().__init__(
             nn.Conv2d(filters, p_out_channels, kernel_size=1),
             nn.BatchNorm2d(p_out_channels),
-            nn.ReLU(inplace=True)
+            nn.ReLU()
         )
     
 class resblock(nn.Module):
@@ -26,12 +26,12 @@ class resblock(nn.Module):
         self.conv1 = nn.Conv2d(dims[0], dims[1], kernel_size=3,
                                padding=1)
         self.bn1 = nn.BatchNorm2d(dims[1])
-        self.relu1 = nn.ReLU(inplace=True)
+        self.relu1 = nn.ReLU()
         self.conv2 = nn.Conv2d(dims[1], dims[2], kernel_size=3,
                                padding=1)
         self.bn2 = nn.BatchNorm2d(dims[2])
         self.conv3 = nn.Conv2d(dims[2], dims[0], kernel_size=1)
-        self.relu2 = nn.ReLU(inplace=True)
+        self.relu2 = nn.ReLU()
         
     def forward(self, inp):
         out = self.conv1(inp)

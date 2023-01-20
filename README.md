@@ -11,9 +11,13 @@
 
 - [ ] Set hydra configuration for all files
 
-- [ ] MCTS
+- [X] MCTS
 
 - [X] parallelized simulate function
+
+- [ ] pretrained policy function for making faster iteration on simulate function
+
+- [ ] parallelized data caching function for faster file upload
 
 - [ ] Experiments stuff 
 

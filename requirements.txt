@@ -1,5 +1,6 @@
 ray==2.2.0
-numba
+h5py==3.7.0
+numba==0.56.4
 fights==0.7.0
 wandb==0.13.9
 joblib==1.2.0
