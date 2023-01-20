@@ -17,8 +17,6 @@ run = wandb.init(project="pretrain_neopjuki-v2", entity="vlab-kaist", group="DDP
 
 conf = OmegaConf.load("config.yaml")
 
-run.config = conf
-
 stm_conf = conf['stm']
 hardware_conf = conf['hardware']
 pretraining_conf = conf['pretraining']
