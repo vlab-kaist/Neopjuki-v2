@@ -129,9 +129,10 @@ def generate_cache(filepath):
     
     futures = [p_data.remote(env_id, open(filepath+fil).readlines()) for fil in file_list]
     returned = ray.get(futures)
+    ray.shutdown()
 
     xdata = np.concatenate([returns[0] for returns in returned])
-    ydata = np.array([list(i) for returns in returned for i in returns[1]])
+    ydata = np.array([np.array(list(i)) for returns in returned for i in returns[1]])
 
     return xdata, ydata
     

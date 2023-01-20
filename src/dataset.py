@@ -44,3 +44,5 @@ class SupervisedDataset(Dataset):
 if __name__ == '__main__':
     pdataset = SupervisedDataset()
     traindataloader = DataLoader(pdataset)
+    for i, (state, action) in enumerate(traindataloader):
+        print(state, action)
