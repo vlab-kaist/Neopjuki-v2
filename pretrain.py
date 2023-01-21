@@ -20,10 +20,9 @@ train_size = int(0.8*len(ds))
 test_size = len(ds) - train_size
 train_ds, test_ds = random_split(ds, [train_size, test_size])
 
-def main():
-    run = wandb.init(project="pretrain_neopjuki-v2", entity="vlab-kaist", group="block"+str(conf['stm']['block_num'])+"-policy-pretraining_final")
-    
+run = wandb.init(project="pretrain_neopjuki-v2", entity="vlab-kaist", group="block"+str(conf['stm']['block_num'])+"-policy-pretraining_final")
 
+def main():
     world_size = torch.cuda.device_count()
     mp.spawn(main_worker, nprocs=world_size, args=(world_size,))
     run.finish()
