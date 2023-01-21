@@ -14,22 +14,6 @@ from torch.utils.data import random_split
 from torch.nn.parallel import DistributedDataParallel as DDP
 
 
-conf = OmegaConf.load("config.yaml")
-
-stm_conf = conf['stm']
-hardware_conf = conf['hardware']
-pretraining_conf = conf['pretraining']
-
-run = wandb.init(project="pretrain_neopjuki-v2", entity="vlab-kaist", group="block"+str(stm_conf['block_num'])+"-policy-pretraining")
-
-
-ds = SupervisedDataset('../')
-
-train_size = int(0.8*len(ds))
-test_size = len(ds) - train_size
-
-train_ds, test_ds = random_split(ds, [train_size, test_size])
-
 
 
 
@@ -109,8 +93,22 @@ def main_worker(gpu_id, world_size):
 
 
 def main():
+    conf = OmegaConf.load("config.yaml")
+    stm_conf = conf['stm']
+    hardware_conf = conf['hardware']
+    pretraining_conf = conf['pretraining']
+
+    run = wandb.init(project="pretrain_neopjuki-v2", entity="vlab-kaist", group="block"+str(stm_conf['block_num'])+"-policy-pretraining")
+    ds = SupervisedDataset('../')
+
+    train_size = int(0.8*len(ds))
+    test_size = len(ds) - train_size
+
+    train_ds, test_ds = random_split(ds, [train_size, test_size])
+
     world_size = torch.cuda.device_count()
     mp.spawn(main_worker, nprocs=world_size, args=(world_size,))
+    run.finish()
 
 
 if __name__ == '__main__':

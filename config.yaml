@@ -25,5 +25,5 @@ hardware:
 
 pretraining:
   lr: 1e-6
-  epochs: 100
+  epochs: 10
   batch_size: 2048
