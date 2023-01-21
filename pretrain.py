@@ -14,7 +14,22 @@ from torch.utils.data import random_split
 from torch.nn.parallel import DistributedDataParallel as DDP
 
 
-def main_worker(gpu_id, world_size, conf):
+conf = OmegaConf.load("config.yaml")
+ds = SupervisedDataset('../')
+train_size = int(0.8*len(ds))
+test_size = len(ds) - train_size
+train_ds, test_ds = random_split(ds, [train_size, test_size])
+
+def main():
+    run = wandb.init(project="pretrain_neopjuki-v2", entity="vlab-kaist", group="block"+str(conf['stm']['block_num'])+"-policy-pretraining_final")
+    
+
+    world_size = torch.cuda.device_count()
+    mp.spawn(main_worker, nprocs=world_size, args=(world_size,))
+    run.finish()
+
+
+def main_worker(gpu_id, world_size):
     mp_context = mp.get_context('fork')
     
     num_worker = conf['hardware']['num_cpus']
@@ -80,30 +95,6 @@ def main_worker(gpu_id, world_size, conf):
 
         if gpu_id == 0:
             torch.save(stmp.state_dict(), conf['pretrain']['saving_point']+"pretrained_"+str(epoch)+".pt")
-
-        
-
-
-    
-    
-    
-    
-
-
-def main():
-    conf = OmegaConf.load("config.yaml")
-
-    run = wandb.init(project="pretrain_neopjuki-v2", entity="vlab-kaist", group="block"+str(conf['stm']['block_num'])+"-policy-pretraining_final")
-    ds = SupervisedDataset('../')
-
-    train_size = int(0.8*len(ds))
-    test_size = len(ds) - train_size
-
-    train_ds, test_ds = random_split(ds, [train_size, test_size])
-
-    world_size = torch.cuda.device_count()
-    mp.spawn(main_worker, nprocs=world_size, args=(world_size,conf))
-    run.finish()
 
 
 if __name__ == '__main__':
