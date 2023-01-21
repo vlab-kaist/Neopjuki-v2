@@ -13,13 +13,14 @@ from src.dataset import SupervisedDataset
 from torch.utils.data import random_split
 from torch.nn.parallel import DistributedDataParallel as DDP
 
-run = wandb.init(project="pretrain_neopjuki-v2", entity="vlab-kaist", group="block10-policy-pretraining")
 
 conf = OmegaConf.load("config.yaml")
 
 stm_conf = conf['stm']
 hardware_conf = conf['hardware']
 pretraining_conf = conf['pretraining']
+
+run = wandb.init(project="pretrain_neopjuki-v2", entity="vlab-kaist", group="block"+str(stm_conf['block_num'])+"-policy-pretraining")
 
 
 ds = SupervisedDataset('../')
@@ -34,8 +35,9 @@ train_ds, test_ds = random_split(ds, [train_size, test_size])
 
 
 def main_worker(gpu_id, world_size):
+    mp_context = mp.get_context('fork')
     epochs = pretraining_conf['epochs']
-    num_worker = 0
+    num_worker = hardware_conf['num_cpus']
     batch_size = pretraining_conf['batch_size']
     
     num_worker_per_node = int(num_worker / world_size)
@@ -64,8 +66,10 @@ def main_worker(gpu_id, world_size):
         valid_loss=0
         train_sampler = torch.utils.data.distributed.DistributedSampler(train_ds).set_epoch(epoch)
         test_sampler = torch.utils.data.distributed.DistributedSampler(test_ds)
-        trainloader = DataLoader(train_ds, batch_size=batch_size, shuffle=False, num_workers=num_worker_per_node, sampler=train_sampler)
-        testloader = DataLoader(test_ds, batch_size=batch_size, shuffle=False, num_workers=num_worker_per_node, sampler=test_sampler)
+        trainloader = DataLoader(train_ds, batch_size=batch_size, shuffle=False, num_workers=num_worker_per_node,
+                                 sampler=train_sampler, pin_memory=True, multiprocessing_context=mp_context)
+        testloader = DataLoader(test_ds, batch_size=batch_size, shuffle=False, num_workers=num_worker_per_node,
+                                sampler=test_sampler, pin_memory=True, multiprocessing_context=mp_context)
 
         
         stmp.train()
