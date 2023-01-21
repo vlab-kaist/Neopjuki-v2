@@ -5,7 +5,7 @@ env:
 
 stm:
   filters: 192
-  block_num: 5
+  block_num: 10
   value_dim: 256
   input_channel: 25
   output_channel: 4

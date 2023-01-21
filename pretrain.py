@@ -13,7 +13,7 @@ from src.dataset import SupervisedDataset
 from torch.utils.data import random_split
 from torch.nn.parallel import DistributedDataParallel as DDP
 
-run = wandb.init(project="pretrain_neopjuki-v2", entity="vlab-kaist", group="DDP")
+run = wandb.init(project="pretrain_neopjuki-v2", entity="vlab-kaist", group="block10-policy-pretraining")
 
 conf = OmegaConf.load("config.yaml")
 
@@ -22,7 +22,7 @@ hardware_conf = conf['hardware']
 pretraining_conf = conf['pretraining']
 
 
-ds = SupervisedDataset('data/')
+ds = SupervisedDataset('../')
 
 train_size = int(0.8*len(ds))
 test_size = len(ds) - train_size
@@ -90,7 +90,7 @@ def main_worker(gpu_id, world_size):
             loss = kl_loss(output, target)
             valid_loss += loss.item()
             print(f'percentage: {(batch_num/len(testloader))*100:.2f}%')
-            run.log({'valid_loss':(batch_num/len(testloader))})
+        run.log({'valid_loss':(valid_loss/len(testloader))})
 
         if gpu_id == 0:
             torch.save(stmp.state_dict(), stm_conf['saving_point']+"pretrained_"+str(epoch)+".pt")
