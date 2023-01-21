@@ -14,15 +14,11 @@ from torch.utils.data import random_split
 from torch.nn.parallel import DistributedDataParallel as DDP
 
 
-
-
-
-
-def main_worker(gpu_id, world_size):
+def main_worker(gpu_id, world_size, conf):
     mp_context = mp.get_context('fork')
-    epochs = pretraining_conf['epochs']
-    num_worker = hardware_conf['num_cpus']
-    batch_size = pretraining_conf['batch_size']
+    
+    num_worker = conf['hardware']['num_cpus']
+    batch_size = conf['pretrain']['batch_size']
     
     num_worker_per_node = int(num_worker / world_size)
     batch_size_per_node = int(batch_size / world_size)
@@ -33,20 +29,20 @@ def main_worker(gpu_id, world_size):
         world_size=world_size,
         rank=gpu_id)
 
-    stmp = stm(input_shape=(stm_conf['input_channel'], conf['env']['board_size'], conf['env']['board_size']),
-          input_channel=stm_conf['input_channel'], p_output_channel=stm_conf['output_channel'],
-          filters=stm_conf['filters'], block_num=stm_conf['block_num'], value_dim=stm_conf['value_dim']).to(f'cuda:{gpu_id}')
+    stmp = stm(input_shape=(conf['stm']['input_channel'], conf['env']['board_size'], conf['env']['board_size']),
+          input_channel=conf['stm']['input_channel'], p_output_channel=conf['stm']['output_channel'],
+          filters=conf['stm']['filters'], block_num=conf['stm']['block_num'], value_dim=conf['stm']['value_dim']).to(f'cuda:{gpu_id}')
 
     torch.cuda.set_device(gpu_id)
 
     stmp = DDP(stmp, device_ids=[gpu_id], output_device=gpu_id).to(gpu_id)
 
     
-    optim = Adam(stmp.parameters(), lr=pretraining_conf['lr'])
+    optim = Adam(stmp.parameters(), lr=conf['pretrain']['lr'])
     kl_loss = nn.KLDivLoss(reduction="batchmean").to(gpu_id)
     mse_loss = nn.MSELoss().to(gpu_id)
 
-    for epoch in range(epochs):
+    for epoch in range(conf['pretrain']['epochs']):
         valid_loss=0
         train_sampler = torch.utils.data.distributed.DistributedSampler(train_ds).set_epoch(epoch)
         test_sampler = torch.utils.data.distributed.DistributedSampler(test_ds)
@@ -83,7 +79,7 @@ def main_worker(gpu_id, world_size):
         run.log({'valid_loss':(valid_loss/len(testloader))})
 
         if gpu_id == 0:
-            torch.save(stmp.state_dict(), stm_conf['saving_point']+"pretrained_"+str(epoch)+".pt")
+            torch.save(stmp.state_dict(), conf['pretrain']['saving_point']+"pretrained_"+str(epoch)+".pt")
 
         
 
@@ -96,11 +92,8 @@ def main_worker(gpu_id, world_size):
 
 def main():
     conf = OmegaConf.load("config.yaml")
-    stm_conf = conf['stm']
-    hardware_conf = conf['hardware']
-    pretraining_conf = conf['pretraining']
 
-    run = wandb.init(project="pretrain_neopjuki-v2", entity="vlab-kaist", group="block"+str(stm_conf['block_num'])+"-policy-pretraining")
+    run = wandb.init(project="pretrain_neopjuki-v2", entity="vlab-kaist", group="block"+str(conf['stm']['block_num'])+"-policy-pretraining_final")
     ds = SupervisedDataset('../')
 
     train_size = int(0.8*len(ds))
@@ -109,7 +102,7 @@ def main():
     train_ds, test_ds = random_split(ds, [train_size, test_size])
 
     world_size = torch.cuda.device_count()
-    mp.spawn(main_worker, nprocs=world_size, args=(world_size,))
+    mp.spawn(main_worker, nprocs=world_size, args=(world_size,conf))
     run.finish()
 
 

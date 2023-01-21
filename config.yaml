@@ -10,7 +10,7 @@ stm:
   input_channel: 25
   output_channel: 4
   
-  saving_point: '../checkpoints/pretrained/'
+  
   inference: 0
   training: 1
 
@@ -23,7 +23,8 @@ hardware:
   num_cpus: 8
 
 
-pretraining:
+pretrain:
   lr: 1e-6
   epochs: 10
   batch_size: 2048
+  saving_point: '../checkpoints/pretrained/'
