@@ -78,12 +78,14 @@ def main_worker(gpu_id, world_size):
             loss = kl_loss(output, target)
             valid_loss += loss.item()
             print(f'percentage: {(batch_num/len(testloader))*100:.2f}%')
+
+        print(f'average loss on epoch:{epoch}, loss:{valid_loss / len(testloader)}')
         run.log({'valid_loss':(valid_loss/len(testloader))})
 
         if gpu_id == 0:
             torch.save(stmp.state_dict(), stm_conf['saving_point']+"pretrained_"+str(epoch)+".pt")
 
-        print(f'average loss on epoch:{epoch}, loss:{valid_loss / len(trainloader)}')
+        
 
 
     
