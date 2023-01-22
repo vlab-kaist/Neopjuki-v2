@@ -112,8 +112,8 @@ def p_data(env_id, lines):
             for (iter, action) in enumerate(actions):
                 preprocessed = preprocessor(state, iter % 2)
                 x_list.append(preprocessed)
-                action_basis = np.zeros((4,9,9))
-                action_basis[action[0]][action[1]][action[2]]+=1
+                action_basis = np.zeros((324,))
+                action_basis[81*action[0]+9*action[1]+action[2]]+=1
                 y_list.append(action_basis)
                 state = env_id.step(state, iter % 2, action)
 
