@@ -53,7 +53,7 @@ def main_worker(gpu_id, world_size):
 
     
     optim = Adam(stmp.parameters(), lr=conf['pretrain']['lr'])
-    kl_loss = nn.KLDivLoss(reduction="batchmean").to(gpu_id)
+    ce_loss = nn.CrossEntropyLoss().to(gpu_id)
     mse_loss = nn.MSELoss().to(gpu_id)
 
     for epoch in range(conf['pretrain']['epochs']):
@@ -72,7 +72,7 @@ def main_worker(gpu_id, world_size):
             state = state.to(gpu_id)
             target = action.to(gpu_id)
             output, val = stmp(state)
-            pol_loss = kl_loss(output, target)
+            pol_loss = ce_loss(output, target)
             val_loss = mse_loss(val, val) # trick
             loss = pol_loss + val_loss
             print(f' percentage:{(batch_num/len(trainloader))*100:.2f}%, loss:{loss.item()}')

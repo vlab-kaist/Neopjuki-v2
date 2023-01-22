@@ -51,13 +51,17 @@ class stm(nn.Module):
         self.net = nn.ModuleList()
         self.net.append(convblock(input_channel, filters))
         for _ in range(block_num):
-            self.net.append(resblock((192, 192, 192)))
-
-        self.net.append(conv1x1block(filters, p_output_channel))
+            self.net.append(resblock((filters, filters, filters)))
         
-        self.policy_head = nn.LogSoftmax(dim=1)
+        self.policy_head = nn.Sequential(
+            conv1x1block(filters, p_output_channel),
+            nn.Flatten(),
+            nn.Linear(p_output_channel*(input_shape[1]*input_shape[2]),p_output_channel*(input_shape[1]**2))
+            )
         self.value_head = nn.Sequential(
-            nn.Linear(p_output_channel*input_shape[1]*input_shape[2], value_dim),
+            conv1x1block(filters, 1),
+            nn.Flatten(),
+            nn.Linear(input_shape[1]*input_shape[2], value_dim),
             nn.Linear(value_dim, 1),
             nn.Tanh()
             )
@@ -67,9 +71,7 @@ class stm(nn.Module):
         for net in self.net:
             out = net(out)
         
-        out_for_v = out.view(-1,324)
-        
-        return self.policy_head(out), self.value_head(out_for_v)
+        return self.policy_head(out), self.value_head(out)
     
 
 
