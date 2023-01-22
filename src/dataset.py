@@ -3,7 +3,7 @@ import ray
 import h5py
 import numpy as np
 from torch.utils.data import DataLoader
-from src.preprocess import generate_cache
+from preprocess import generate_cache
 from torch.utils.data.dataset import Dataset
 from fights.envs.puoribor import PuoriborEnv
 
@@ -23,7 +23,7 @@ class SupervisedDataset(Dataset):
             self.x_data, self.y_data = generate_cache(cpath)
             hf = h5py.File(cpath+h5, 'w')
             hf.create_dataset("xdata", shape=(0, 25, 9, 9), maxshape=(None, 25, 9, 9), dtype=np.float32, compression='lzf')
-            hf.create_dataset("ydata", shape=(0, 4, 9, 9), maxshape=(None, 4, 9, 9), dtype=np.float32, compression='lzf')
+            hf.create_dataset("ydata", shape=(0, 324), maxshape=(None, 324), dtype=np.float32, compression='lzf')
 
             orig_length = hf["xdata"].shape[0]
             hf["xdata"].resize(orig_length + len(self.x_data), axis=0)
