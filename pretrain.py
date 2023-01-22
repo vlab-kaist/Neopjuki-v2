@@ -85,7 +85,7 @@ def main_worker(gpu_id, world_size):
             state = state.to(gpu_id)
             target = action.to(gpu_id)
             output, val = stmp(state)
-            loss = kl_loss(output, target)
+            loss = ce_loss(output, target)
             valid_loss += loss.item()
             print(f'percentage: {(batch_num/len(testloader))*100:.2f}%')
 
