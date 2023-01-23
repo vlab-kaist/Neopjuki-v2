@@ -9,10 +9,6 @@ stm:
   value_dim: 256
   input_channel: 25
   output_channel: 4
-  
-  
-  inference: 0
-  training: 1
 
 mcts:
   temp: 1.414
@@ -25,6 +21,6 @@ hardware:
 
 pretrain:
   lr: 1e-6
-  epochs: 10
+  epochs: 50
   batch_size: 2048
   saving_point: '../checkpoints/pretrained/'
