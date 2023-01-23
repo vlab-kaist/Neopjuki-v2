@@ -3,9 +3,10 @@ import math
 import torch
 import random
 from fights.envs import puoribor
-from src.preprocess import preprocessor
-from src.preprocess import hashing_state
-from src.preprocess import generate_actions
+from preprocess import preprocessor
+from preprocess import hashing_state
+from preprocess import generate_actions
+
 
 class Node(object):
     def __init__(self, turn, state, action, parent):

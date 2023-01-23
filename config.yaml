@@ -23,4 +23,4 @@ pretrain:
   lr: 1e-6
   epochs: 50
   batch_size: 2048
-  saving_point: '../checkpoints/pretrained/'
+  saving_point: '../../checkpoints/pretrained/'

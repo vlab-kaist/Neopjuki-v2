@@ -1,21 +1,20 @@
 import os
 import wandb
 import torch
-from tqdm import tqdm
 import torch.nn as nn
 from src.model import stm
 from torch.optim import Adam
 from omegaconf import OmegaConf
 import torch.distributed as dist
 import torch.multiprocessing as mp
+from dataset import SupervisedDataset
 from torch.utils.data import DataLoader
-from src.dataset import SupervisedDataset
 from torch.utils.data import random_split
 from torch.nn.parallel import DistributedDataParallel as DDP
 
 
 conf = OmegaConf.load("config.yaml")
-ds = SupervisedDataset('../')
+ds = SupervisedDataset('../../')
 train_size = int(0.8*len(ds))
 test_size = len(ds) - train_size
 train_ds, test_ds = random_split(ds, [train_size, test_size])
