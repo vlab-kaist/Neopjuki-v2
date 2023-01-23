@@ -2,7 +2,7 @@ import os
 import wandb
 import torch
 import torch.nn as nn
-from src.model import stm
+from model import stm
 from torch.optim import Adam
 from omegaconf import OmegaConf
 import torch.distributed as dist
