@@ -4,6 +4,7 @@ env:
   max_walls: 10 
 
 stm:
+  temp: 0.01
   filters: 192
   block_num: 7
   value_dim: 256

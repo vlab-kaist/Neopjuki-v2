@@ -45,8 +45,10 @@ class resblock(nn.Module):
 
 
 class stm(nn.Module):
-    def __init__(self, input_shape: tuple, input_channel: int, p_output_channel: int, filters: int, block_num: int, value_dim: int):
+    def __init__(self, input_shape: tuple, input_channel: int, p_output_channel: int, filters: int, block_num: int, value_dim: int, temp=1.0):
         super().__init__()
+
+        self.t = temp
 
         self.net = nn.ModuleList()
         self.net.append(convblock(input_channel, filters))
@@ -70,6 +72,8 @@ class stm(nn.Module):
         out = inp
         for net in self.net:
             out = net(out)
+
+        out /= self.t
         
         return self.policy_head(out), self.value_head(out)
     

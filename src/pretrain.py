@@ -19,7 +19,7 @@ train_size = int(0.8*len(ds))
 test_size = len(ds) - train_size
 train_ds, test_ds = random_split(ds, [train_size, test_size])
 
-run = wandb.init(project="pretrain_neopjuki-v2", entity="vlab-kaist", group="block"+str(conf['stm']['block_num'])+"-policy-pretraining_final")
+run = wandb.init(project="pretrain_neopjuki-v2", entity="vlab-kaist", group="block"+str(conf['stm']['block_num'])+"-policy-pretraining")
 
 def main():
     world_size = torch.cuda.device_count()
@@ -44,7 +44,7 @@ def main_worker(gpu_id, world_size):
 
     stmp = stm(input_shape=(conf['stm']['input_channel'], conf['env']['board_size'], conf['env']['board_size']),
           input_channel=conf['stm']['input_channel'], p_output_channel=conf['stm']['output_channel'],
-          filters=conf['stm']['filters'], block_num=conf['stm']['block_num'], value_dim=conf['stm']['value_dim']).to(f'cuda:{gpu_id}')
+               filters=conf['stm']['filters'], block_num=conf['stm']['block_num'], value_dim=conf['stm']['value_dim'], temp=conf['stm']['temp']).to(f'cuda:{gpu_id}')
 
     torch.cuda.set_device(gpu_id)
 
