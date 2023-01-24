@@ -12,7 +12,7 @@ stm:
 
 mcts:
   temp: 1.414
-  sim_num: 1000
+  sim_num: 20
 
 
 hardware:

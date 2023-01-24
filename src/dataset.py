@@ -5,7 +5,7 @@ import numpy as np
 from preprocess import generate_cache
 from torch.utils.data import DataLoader
 from torch.utils.data.dataset import Dataset
-from fights.envs.puoribor import PuoriborEnv
+from fights.envs import PuoriborEnv
 
 
 class SupervisedDataset(Dataset):

@@ -4,7 +4,7 @@ import itertools
 import numpy as np
 from numba import jit
 from joblib import hash as h
-from fights.envs import puoribor
+from fights.envs import PuoriborEnv
 
 def preprocessor(inps, agent_id, max_walls=10):
     np_ones = np.ones(shape=inps.board[0].shape)
@@ -126,7 +126,7 @@ def p_data(env_id, lines):
 
 def generate_cache(filepath):
     ray.init()
-    env = puoribor.PuoriborEnv()
+    env = PuoriborEnv()
     env_id = ray.put(env)
     file_list = os.listdir(filepath)
     
@@ -145,8 +145,7 @@ def generate_cache(filepath):
 
 if __name__ == '__main__':
 
-    from fights.envs import puoribor
-    env = puoribor.PuoriborEnv()
+    env = PuoriborEnv()
     state = env.initialize_state()
     preprocessed_state = preprocessor(state,0)
     for i, val in enumerate(preprocessed_state):

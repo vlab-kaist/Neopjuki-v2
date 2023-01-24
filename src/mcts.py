@@ -2,7 +2,7 @@ import ray
 import math
 import torch
 import random
-from fights.envs import puoribor
+from fights.envs import PuoriborEnv
 from preprocess import preprocessor
 from preprocess import hashing_state
 from preprocess import generate_actions
@@ -21,20 +21,19 @@ class Node(object):
         self.parent = parent # Node, -1 for root
         
         self.pi = 0
+        self.val = 0
         self.wins = 0
         self.visits = 1
         
 
 class MCTS(object):
-    def __init__(self, stm, temp, sim_num, max_iter=50, first=0, initial_state=None):
+    def __init__(self, stm, temp, first=0, initial_state=None):
         super().__init__()
 
         
         self.stm = stm
         self.temp = temp
-        self.max_iter=max_iter
-        self.sim_num = sim_num
-        self.env = puoribor.PuoriborEnv()
+        self.env = PuoriborEnv()
         self.actions_cache = generate_actions((4,9,9))
 
         
@@ -47,7 +46,7 @@ class MCTS(object):
         
     def UCT(self, node):
         q_val = 0
-        u_val = self.temp*self.pi*(math.sqrt(node.parent.visits)/(1+node.visits))
+        u_val = self.temp*node.pi*(math.sqrt(node.parent.visits)/(1+node.visits))
 
         if len(node.childs):
             q_val = (node.wins / node.visits)
@@ -59,23 +58,24 @@ class MCTS(object):
 
     
     def select(self):
-        
         current = self.root
         while len(current.childs):
             keys = []
             uct_val = []
-            for key, val in current.childs.item():
-                uct_val.append(UCT(val))
+            for key, val in current.childs.items():
+                uct_val.append(self.UCT(val))
                 keys.append(key)
-            current = current.childs[keys[np.array(uct_val).argmax()]]
+            current = current.childs[keys[torch.Tensor(uct_val).argmax().item()]]
             current.visits += 1
         return current
     
     def expand(self, node): # all possible states 
         assert len(node.childs) == 0 # Check this is the leaf node
         pol, val = self.stm(torch.Tensor(preprocessor(node.state, (node.turn+1)%2)).unsqueeze(0))
+
         pol = pol.flatten()
         pis = []
+        vals = []
         nodes = []
         states = []
         actions = []
@@ -84,20 +84,27 @@ class MCTS(object):
         
         for i, action in enumerate(self.actions_cache):
             try:
-                states.append(self.env.step(node.state, node.turn, action))
+                state = self.env.step(node.state, node.turn, action)
+                states.append(state)
                 actions.append(action)
                 pis.append(pol[i])
+                _, val = self.stm(torch.Tensor(preprocessor(state, node.turn)).unsqueeze(0))
+                if val.item() <= 0:
+                    vals.append(-1)
+                elif val.item() > 0:
+                    vals.append(1)
 
             except ValueError:
                 pass
         
         for i, state in enumerate(states):
-            new_node = Node((node.turn+1)%2, state,actions[i], node)
+            new_node = Node((node.turn+1)%2, state, actions[i], node)
             new_node.pi = pis[i]
+            new_node.val = vals[i]
             node.childs[new_node.address] = new_node
             nodes.append(new_node)
             prep_states.append((state, new_node.turn))
-        return prep_states, nodes, val
+        return prep_states, nodes
 
     def simulate(self, preps):
         starting_point = preps[1]
@@ -137,10 +144,10 @@ class MCTS(object):
     def backpropagate(self, node, win):
         assert node.visits == 1
 
-        if win == -1:
-            pass
-        else:
+        if win == 1:
             node.wins += win
+        elif win == -1:
+            pass
         absolute_turn = node.turn
         while node.parent == -1:
             if node.parent.turn != absolute_turn:
@@ -156,6 +163,18 @@ class MCTS(object):
                     pass
             
             node = node.parent
+
+
+    def decide(self, node):
+        current = node
+        keys = []
+        uct_val = []
+        for key, val in current.childs.items():
+            uct_val.append(self.UCT(val))
+            keys.append(key)
+        current = current.childs[keys[torch.multinomial(torch.Tensor(uct_val).softmax(dim=0),1)]]
+        current.visits += 1
+        return current.action
 
 
 @ray.remote
@@ -212,11 +231,11 @@ if __name__ == '__main__':
 
     ray.init()
     
-    env_id = ray.put(puoribor.PuoriborEnv())
+    env_id = ray.put(PuoriborEnv())
     stm_id = ray.put(stm)
-    mcts = MCTS(stm, 1.4, 10)
+    mcts = MCTS(stm, 1.4)
     leaf = mcts.select()
-    prep_states, nodes, val = mcts.expand(leaf)
+    prep_states, nodes = mcts.expand(leaf)
 
     mcts.simulate(prep_states[58])
     
