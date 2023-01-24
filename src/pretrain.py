@@ -44,7 +44,7 @@ def main_worker(gpu_id, world_size):
 
     stmp = stm(input_shape=(conf['stm']['input_channel'], conf['env']['board_size'], conf['env']['board_size']),
           input_channel=conf['stm']['input_channel'], p_output_channel=conf['stm']['output_channel'],
-               filters=conf['stm']['filters'], block_num=conf['stm']['block_num'], value_dim=conf['stm']['value_dim'], temp=conf['stm']['temp']).to(f'cuda:{gpu_id}')
+               filters=conf['stm']['filters'], block_num=conf['stm']['block_num'], value_dim=conf['stm']['value_dim']).to(f'cuda:{gpu_id}')
 
     torch.cuda.set_device(gpu_id)
 

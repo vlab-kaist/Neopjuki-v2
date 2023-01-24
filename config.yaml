@@ -4,9 +4,8 @@ env:
   max_walls: 10 
 
 stm:
-  temp: 1.0
-  filters: 256
-  block_num: 20
+  filters: 192
+  block_num: 7
   value_dim: 256
   input_channel: 25
   output_channel: 4
@@ -23,5 +22,5 @@ hardware:
 pretrain:
   lr: 1e-6
   epochs: 50
-  batch_size: 512
+  batch_size: 2048
   saving_point: '../../checkpoints/pretrained/'
