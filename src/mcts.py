@@ -73,7 +73,7 @@ class MCTS(object):
         assert len(node.childs) == 0 # Check this is the leaf node
         pol, val = self.stm(torch.Tensor(preprocessor(node.state, (node.turn+1)%2)).unsqueeze(0))
 
-        pol = pol.flatten()
+        pol = pol.squeeze().softmax(dim=0)
         pis = []
         vals = []
         nodes = []
@@ -149,7 +149,8 @@ class MCTS(object):
         elif win == -1:
             pass
         absolute_turn = node.turn
-        while node.parent == -1:
+        while node.parent != -1:
+            node.parent.visits += 1
             if node.parent.turn != absolute_turn:
                 if win == 1:
                     node.parent.wins += 1
@@ -169,10 +170,12 @@ class MCTS(object):
         current = node
         keys = []
         uct_val = []
+        
         for key, val in current.childs.items():
             uct_val.append(self.UCT(val))
             keys.append(key)
-        current = current.childs[keys[torch.multinomial(torch.Tensor(uct_val).softmax(dim=0),1)]]
+
+        current = current.childs[keys[torch.multinomial(torch.Tensor(uct_val),1)]]
         current.visits += 1
         return current.action
 

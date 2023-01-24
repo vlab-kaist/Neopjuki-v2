@@ -33,6 +33,8 @@ stmp.eval()
 
 
 envs = PuoriborEnv()
+
+
 state = envs.initialize_state()
 tr = MCTS(stmp, conf['mcts']['temp'], initial_state=state)
 current = tr.root
@@ -49,10 +51,15 @@ while state.done == False:
             elif node.val < 0:
                 tr.backpropagate(node, -1)
     action = tr.decide(current)
+    if current.parent == -1:
+        pass
+    else:
+        print(current.pi.item(), current.val, current.visits, current.parent.visits)
     print(state)
     state = envs.step(state, current.turn, action)
-    tr.root = current.childs[hashing_state(state, (current.turn+1)%2)]
+    
     current = current.childs[hashing_state(state, (current.turn+1)%2)]
+    tr.root = current
     if sum(state.walls_remaining) == 0:
         t += 1
         if t > 50:
