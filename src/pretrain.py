@@ -2,7 +2,7 @@ import os
 import wandb
 import torch
 import torch.nn as nn
-from src.model import stm
+from model import stm
 from torch.optim import Adam
 from omegaconf import OmegaConf
 import torch.distributed as dist
@@ -13,13 +13,13 @@ from torch.utils.data import random_split
 from torch.nn.parallel import DistributedDataParallel as DDP
 
 
-conf = OmegaConf.load("config.yaml")
+conf = OmegaConf.load("../config.yaml")
 ds = SupervisedDataset('../../')
 train_size = int(0.8*len(ds))
 test_size = len(ds) - train_size
 train_ds, test_ds = random_split(ds, [train_size, test_size])
 
-run = wandb.init(project="pretrain_neopjuki-v2", entity="vlab-kaist", group="block"+str(conf['stm']['block_num'])+"-policy-pretraining")
+run = wandb.init(project="pretrain_neopjuki-v2", entity="vlab-kaist", group="block"+str(conf['stm']['block_num'])+"-policy-pretraining_rescaling_softmax_1e-6_adam")
 
 def main():
     world_size = torch.cuda.device_count()

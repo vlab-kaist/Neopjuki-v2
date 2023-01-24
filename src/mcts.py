@@ -102,20 +102,29 @@ class MCTS(object):
     def simulate(self, preps):
         starting_point = preps[1]
         state = preps[0]
-
         turn = preps[1]
 
+        t=0
         while state.done == False:
-            pol, val = self.stm(torch.Tensor(preprocessor(preps[0], preps[1])).unsqueeze(0).to(self.device))
-            pol = pol.squeeze()
-            index = int(torch.multinomial(torch.flatten(pol), 1))
-            action = (index//81,index//9,index%9)
+            pol, val = self.stm(torch.Tensor(preprocessor(state, turn)).unsqueeze(0))
+            pol = pol.squeeze().softmax(dim=0)
             
+            index = int(torch.multinomial(torch.flatten(pol), 1))
+            at = index//81
+            xt = (index - (at*81))//9
+            yt = index % 9 
+            action = (at,xt,yt)
+
+            print(state)
+            print(action)
             try:
                 state = self.env.step(state, turn, action)
                 turn = (turn+1)%2
             except ValueError:
-                pass
+                if t > 10:
+                    return 0
+                t += 1
+                
             
             
         if turn == starting_point:
@@ -154,29 +163,32 @@ def simulate(env, stm, preps):
     
     starting_point = preps[1]
     state = preps[0]
-
     turn = preps[1]
-    i = 0
+    t = 0
     while state.done == False:
-        pol, val = stm(torch.Tensor(preprocessor(preps[0], preps[1])).unsqueeze(0))
-        pol = pol.squeeze()
+        pol, val = stm(torch.Tensor(preprocessor(state, turn)).unsqueeze(0))
+        pol = pol.squeeze().softmax(dim=0)
+            
         index = int(torch.multinomial(torch.flatten(pol), 1))
-        action = (index//81,index//9,index%9)
-    
+        at = index//81
+        xt = (index - (at*81))//9
+        yt = index % 9 
+        action = (at,xt,yt)
         try:
-            if(i > 1000):
-                return 0
             state = env.step(state, turn, action)
             turn = (turn+1)%2
         except ValueError:
-            i += 1
-            pass
+            if t > 10:
+                return 0
+            t += 1
+            
+            
+            
     if turn == starting_point:
         return -1
-    
     elif turn != starting_point:
         return 1
-
+    
     
 
 if __name__ == '__main__':
@@ -185,8 +197,18 @@ if __name__ == '__main__':
     from model import stm
 
     
-    stm = stm((25, 9, 9), input_channel=25, p_output_channel=4, filters=192, block_num=5, value_dim=256)
+    stm = stm((25, 9, 9), input_channel=25, p_output_channel=4, filters=192, block_num=7, value_dim=256)
+    state_dict = torch.load("../../pretrained.pt")
+    from collections import OrderedDict
+    new_state_dict = OrderedDict()
+    for k, v in state_dict.items():
+        name = k[7:]
+        new_state_dict[name] = v
+        
+
+    stm.load_state_dict(new_state_dict)
     
+    stm.eval()
 
     ray.init()
     
@@ -195,7 +217,9 @@ if __name__ == '__main__':
     mcts = MCTS(stm, 1.4, 10)
     leaf = mcts.select()
     prep_states, nodes, val = mcts.expand(leaf)
-    print(len(prep_states))
+
+    mcts.simulate(prep_states[58])
+    
 
     num_cpus = 8
 
@@ -203,13 +227,8 @@ if __name__ == '__main__':
 
     result_list = []
     leng = len(prep_states)//num_cpus
-    for i in tqdm(range(leng+1)):
-        if i == leng:
-            result_list.append(ray.get([simulate.remote(env_id, stm_id, prep) for prep in prep_states[num_cpus*leng:]]))
-        else:
-            result_list.append(ray.get([simulate.remote(env_id, stm_id, prep) for prep in prep_states[num_cpus*i:num_cpus*(i+1)]]))
-    print(result_list)
-    
-    
+    result = ray.get([simulate.remote(env_id, stm_id, prep) for prep in prep_states])
+    print(result)
+
     
     print(f'time: {time.time()-a}')

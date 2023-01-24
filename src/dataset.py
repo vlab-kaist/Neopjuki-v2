@@ -2,8 +2,8 @@ import os
 import ray
 import h5py
 import numpy as np
+from preprocess import generate_cache
 from torch.utils.data import DataLoader
-from src.preprocess import generate_cache
 from torch.utils.data.dataset import Dataset
 from fights.envs.puoribor import PuoriborEnv
 
@@ -42,9 +42,11 @@ class SupervisedDataset(Dataset):
         return x, y
 
 if __name__ == '__main__':
-    pdataset = SupervisedDataset()
+    pdataset = SupervisedDataset("../../")
     traindataloader = DataLoader(pdataset)
     for i, (state, action) in enumerate(traindataloader):
-        print(state.shape)
-        print(action.shape)
+        print(state)
+        print(action)
+            
+        
         breakpoint()

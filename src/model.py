@@ -73,7 +73,7 @@ class stm(nn.Module):
         for net in self.net:
             out = net(out)
 
-        out /= self.t
+        out = out / self.t
         
         return self.policy_head(out), self.value_head(out)
     
