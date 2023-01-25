@@ -7,37 +7,33 @@ from mcts import MCTS
 from omegaconf import OmegaConf
 from fights.envs import PuoriborEnv
 from preprocess import preprocessor
+from collections import OrderedDict
 from preprocess import hashing_state
-conf = OmegaConf.load("../config.yaml")
 
-snum = conf['mcts']['sim_num']
 
-stmp = stm(input_shape=(conf['stm']['input_channel'], conf['env']['board_size'], conf['env']['board_size']),
+
+def load_model(conf, path="../../"):
+    stmp = stm(input_shape=(conf['stm']['input_channel'], conf['env']['board_size'], conf['env']['board_size']),
            input_channel=conf['stm']['input_channel'], p_output_channel=conf['stm']['output_channel'],
            filters=conf['stm']['filters'], block_num=conf['stm']['block_num'], value_dim=conf['stm']['value_dim'])
+    
+    state_dict = torch.load(path+"pretrained.pt")
+    new_state_dict = OrderedDict()
+    for k, v in state_dict.items():
+        name = k[7:]
+        new_state_dict[name] = v
+    stmp.load_state_dict(new_state_dict)
+    stmp.eval()
 
-
-state_dict = torch.load("../../pretrained.pt")
-from collections import OrderedDict
-new_state_dict = OrderedDict()
-for k, v in state_dict.items():
-    name = k[7:]
-    new_state_dict[name] = v
-        
-stmp.load_state_dict(new_state_dict)
-
-
-stmp.eval()
+    return stmp
 
 
 
-
-envs = PuoriborEnv()
-
-
-def selfplay(play_num):
-    for i in range(play_num)):
-
+def selfplay(stmp, play_num, snum):
+    
+    envs = PuoriborEnv()
+    for i in range(play_num):
+        print(f'the game number is: {i}')
         state = envs.initialize_state()
         tr = MCTS(stmp, conf['mcts']['temp'])
         current = tr.root
@@ -67,3 +63,14 @@ def selfplay(play_num):
             state = envs.step(state, current.turn, action)
             current = current.childs[hashing_state(state, (current.turn+1)%2)]
             tr.root = current
+
+
+
+
+if __name__ == '__main__':
+    conf = OmegaConf.load("../config.yaml")
+    snum = conf['mcts']['sim_num']
+    stmp = load_model(conf)
+
+    selfplay(stmp, 2, snum)
+    

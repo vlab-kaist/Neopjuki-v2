@@ -49,7 +49,7 @@ class MCTS(object):
         u_val = 0
         if add_noise:
             m = torch.distributions.dirichlet.Dirichlet(torch.Tensor([0.03]))
-            u_val = self.temp*((1-0.25)*node.pi + 0.25*m.sample())*(math.sqrt(node.parent.visits)/(1+node.visits))
+            u_val = (self.temp*((1-0.25)*node.pi + 0.25*m.sample())*(math.sqrt(node.parent.visits)/(1+node.visits))).item()
         else:
             u_val = self.temp*node.pi*(math.sqrt(node.parent.visits)/(1+node.visits))
 
