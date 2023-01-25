@@ -21,7 +21,6 @@ class Node(object):
         self.parent = parent # Node, -1 for root
         
         self.pi = 0
-        self.val = 0
         self.wins = 0
         self.visits = 1
         
@@ -69,30 +68,37 @@ class MCTS(object):
             current.visits += 1
         return current
     
-    def expand(self, node): # all possible states 
-        assert len(node.childs) == 0 # Check this is the leaf node
+    def expand(self, node): 
+        assert len(node.childs) == 0
         pol, val = self.stm(torch.Tensor(preprocessor(node.state, (node.turn+1)%2)).unsqueeze(0))
 
         pol = pol.squeeze().softmax(dim=0)
         pis = []
-        vals = []
         nodes = []
         states = []
         actions = []
 
         prep_states = []
-        
+        t = 0
         for i, action in enumerate(self.actions_cache):
             try:
                 state = self.env.step(node.state, node.turn, action)
+                turn = node.turn
+        
+                if sum(state.walls_remaining) == 0:
+                    checker = node.parent
+                    while checker != -1:
+                        if action == checker.action:
+                            t += 1
+                        if t > 10:
+                            raise ValueError
+
+                        checker = checker.parent
+                    
                 states.append(state)
                 actions.append(action)
                 pis.append(pol[i])
-                _, val = self.stm(torch.Tensor(preprocessor(state, node.turn)).unsqueeze(0))
-                if val.item() <= 0:
-                    vals.append(-1)
-                elif val.item() > 0:
-                    vals.append(1)
+
 
             except ValueError:
                 pass
@@ -100,7 +106,6 @@ class MCTS(object):
         for i, state in enumerate(states):
             new_node = Node((node.turn+1)%2, state, actions[i], node)
             new_node.pi = pis[i]
-            new_node.val = vals[i]
             node.childs[new_node.address] = new_node
             nodes.append(new_node)
             prep_states.append((state, new_node.turn))
@@ -166,7 +171,7 @@ class MCTS(object):
             node = node.parent
 
 
-    def decide(self, node):
+    def decide(self, node, add_noise=False):
         current = node
         keys = []
         uct_val = []
@@ -175,7 +180,11 @@ class MCTS(object):
             uct_val.append(self.UCT(val))
             keys.append(key)
 
-        current = current.childs[keys[torch.multinomial(torch.Tensor(uct_val),1)]]
+        if add_noise == True:
+            current = current.childs[keys[torch.multinomial(torch.Tensor(uct_val),1)]]
+
+        else:
+            current = current.childs[keys[np.array(uct_val).argmax()]]
         current.visits += 1
         return current.action
 
