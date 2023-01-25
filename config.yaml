@@ -11,7 +11,7 @@ stm:
   output_channel: 4
 
 mcts:
-  temp: 1.414
+  temp: 0.1
   sim_num: 20
 
 

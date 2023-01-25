@@ -35,42 +35,35 @@ stmp.eval()
 envs = PuoriborEnv()
 
 
-state = envs.initialize_state()
-tr = MCTS(stmp, conf['mcts']['temp'])
-current = tr.root
+def selfplay(play_num):
+    for i in range(play_num)):
 
-t = 0
-while state.done == False:
-    nodes = []
-    for i in tqdm(range(snum)):
-        leaf = tr.select()
-        prep_states, nodes = tr.expand(leaf)
-        for node in nodes:
-            _, val = tr.stm(torch.Tensor(preprocessor(node.state, (node.turn+1)%2)).unsqueeze(0))
-            if val >= 0:
-                tr.backpropagate(node, 1)
-            elif val < 0:
-                tr.backpropagate(node, -1)
+        state = envs.initialize_state()
+        tr = MCTS(stmp, conf['mcts']['temp'])
+        current = tr.root
 
-    pi_t = np.zeros((324,))
-    for addr in current.childs:
-        node = current.childs[addr]
-        pi_t[node.action[0]*81 + node.action[1]*9 + node.action[2]] += node.visits
+        while state.done == False:
+            nodes = []
+            for i in tqdm(range(snum)):
+                leaf = tr.select()
+                prep_states, nodes = tr.expand(leaf)
+                for node in nodes:
+                    if node.state.done == True:
+                        tr.backpropagate(node, 1)
+                    else:
+                        _, val = tr.stm(torch.Tensor(preprocessor(node.state, (node.turn+1)%2)).unsqueeze(0).to(tr.dev))
+                        if val >= 0:
+                            tr.backpropagate(node, 1)
+                        elif val < 0:
+                            tr.backpropagate(node, -1)
 
-    pi_t = pi_t/current.visits
+            pi_t = np.zeros((324,))
+            for addr in current.childs:
+                node = current.childs[addr]
+                pi_t[node.action[0]*81 + node.action[1]*9 + node.action[2]] += node.visits
 
-    print(current.state)
-    
-    # Need to obtain whole pi and val (the target)
-    action = tr.decide(current)
-    
-    
-    state = envs.step(state, current.turn, action)
-    
-    current = current.childs[hashing_state(state, (current.turn+1)%2)]
-    
-    tr.root = current
-    if sum(state.walls_remaining) == 0:
-        t += 1
-        if t > 50:
-            break
+            pi_t = pi_t/current.visits
+            action = tr.decide(current)
+            state = envs.step(state, current.turn, action)
+            current = current.childs[hashing_state(state, (current.turn+1)%2)]
+            tr.root = current

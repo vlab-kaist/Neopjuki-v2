@@ -2,6 +2,7 @@ import ray
 import math
 import torch
 import random
+import numpy as np
 from fights.envs import PuoriborEnv
 from preprocess import preprocessor
 from preprocess import hashing_state
@@ -29,8 +30,8 @@ class MCTS(object):
     def __init__(self, stm, temp, first=0, initial_state=None):
         super().__init__()
 
-        
-        self.stm = stm
+        self.dev = torch.device("cuda:0")
+        self.stm = stm.to(self.dev)
         self.temp = temp
         self.env = PuoriborEnv()
         self.actions_cache = generate_actions((4,9,9))
@@ -43,9 +44,14 @@ class MCTS(object):
             self.root = Node(first, self.env.initialize_state(), -1, -1)
 
         
-    def UCT(self, node):
+    def UCT(self, node, add_noise=False):
         q_val = 0
-        u_val = self.temp*node.pi*(math.sqrt(node.parent.visits)/(1+node.visits))
+        u_val = 0
+        if add_noise:
+            m = torch.distributions.dirichlet.Dirichlet(torch.Tensor([0.03]))
+            u_val = self.temp*((1-0.25)*node.pi + 0.25*m.sample())*(math.sqrt(node.parent.visits)/(1+node.visits))
+        else:
+            u_val = self.temp*node.pi*(math.sqrt(node.parent.visits)/(1+node.visits))
 
         if len(node.childs):
             q_val = (node.wins / node.visits)
@@ -70,7 +76,7 @@ class MCTS(object):
     
     def expand(self, node): 
         assert len(node.childs) == 0
-        pol, val = self.stm(torch.Tensor(preprocessor(node.state, (node.turn+1)%2)).unsqueeze(0))
+        pol, val = self.stm(torch.Tensor(preprocessor(node.state, (node.turn+1)%2)).unsqueeze(0).to(self.dev))
 
         pol = pol.squeeze().softmax(dim=0)
         pis = []
@@ -90,7 +96,7 @@ class MCTS(object):
                     while checker != -1:
                         if action == checker.action:
                             t += 1
-                        if t > 10:
+                        if t > 2:
                             raise ValueError
 
                         checker = checker.parent
@@ -105,7 +111,7 @@ class MCTS(object):
         
         for i, state in enumerate(states):
             new_node = Node((node.turn+1)%2, state, actions[i], node)
-            new_node.pi = pis[i]
+            new_node.pi = pis[i].item()
             node.childs[new_node.address] = new_node
             nodes.append(new_node)
             prep_states.append((state, new_node.turn))
@@ -118,7 +124,7 @@ class MCTS(object):
 
         t=0
         while state.done == False:
-            pol, val = self.stm(torch.Tensor(preprocessor(state, turn)).unsqueeze(0))
+            pol, val = self.stm(torch.Tensor(preprocessor(state, turn)).unsqueeze(0).to(self.dev))
             pol = pol.squeeze().softmax(dim=0)
             
             index = int(torch.multinomial(torch.flatten(pol), 1))
@@ -171,20 +177,16 @@ class MCTS(object):
             node = node.parent
 
 
-    def decide(self, node, add_noise=False):
+    def decide(self, node):
         current = node
         keys = []
         uct_val = []
         
         for key, val in current.childs.items():
-            uct_val.append(self.UCT(val))
+            uct_val.append(self.UCT(val, add_noise=True))
             keys.append(key)
 
-        if add_noise == True:
-            current = current.childs[keys[torch.multinomial(torch.Tensor(uct_val),1)]]
-
-        else:
-            current = current.childs[keys[np.array(uct_val).argmax()]]
+        current = current.childs[keys[np.array(uct_val).argmax()]]        
         current.visits += 1
         return current.action
 
