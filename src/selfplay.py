@@ -2,6 +2,7 @@ import os
 import h5py
 import torch
 import numpy as np
+from tqdm import tqdm
 from model import stm
 from mcts import MCTS
 from omegaconf import OmegaConf
@@ -12,12 +13,12 @@ from preprocess import hashing_state
 
 
 
-def load_model(conf, path="../../"):
+def load_model(conf, path="../../checkpoints/selfplayed/"):
     stmp = stm(input_shape=(conf['stm']['input_channel'], conf['env']['board_size'], conf['env']['board_size']),
            input_channel=conf['stm']['input_channel'], p_output_channel=conf['stm']['output_channel'],
            filters=conf['stm']['filters'], block_num=conf['stm']['block_num'], value_dim=conf['stm']['value_dim'])
     
-    state_dict = torch.load(path+"pretrained.pt")
+    state_dict = torch.load(path)
     new_state_dict = OrderedDict()
     for k, v in state_dict.items():
         name = k[7:]
@@ -53,10 +54,11 @@ def selfplay(stmp, play_num, snum, cache_name):
 
         s_ts = []
         pi_ts = []
-
+        print(state)
+        
         while state.done == False:
             nodes = []
-            for i in range(snum):
+            for i in tqdm(range(snum)):
                 leaf = tr.select()
                 prep_states, nodes = tr.expand(leaf)
                 for node in nodes:
@@ -79,6 +81,7 @@ def selfplay(stmp, play_num, snum, cache_name):
             
             action = tr.decide(current)
             state = envs.step(state, current.turn, action)
+            print(state)
             current = current.childs[hashing_state(state, (current.turn+1)%2)]
             tr.root = current
             if state.done == True:
@@ -101,6 +104,6 @@ def selfplay(stmp, play_num, snum, cache_name):
 if __name__ == '__main__':
     conf = OmegaConf.load("../config.yaml")
     snum = conf['mcts']['sim_num']
-    stmp = load_model(conf)
+    stmp = load_model(conf, "../../checkpoints/selfplayed/version1.pt")
 
-    selfplay(stmp, 1, snum, "../../plays/cache.h5")
+    selfplay(stmp, 100, snum, "../../plays/cache.h5")

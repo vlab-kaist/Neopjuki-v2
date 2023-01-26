@@ -42,7 +42,7 @@ def main_worker(gpu_id, world_size):
         world_size=world_size,
         rank=gpu_id)
 
-    stmp = load_model(conf, "../../").to(f'cuda:{gpu_id}')
+    stmp = load_model(conf, "../../pretrained.pt").to(f'cuda:{gpu_id}')
 
     torch.cuda.set_device(gpu_id)
 
@@ -74,7 +74,7 @@ def main_worker(gpu_id, world_size):
             run.log({'policy_loss':pol_loss.item()})
             val_loss = mse_loss(val, value)
             run.log({'value_loss': val_loss.item()})
-            loss = pol_loss + val_loss
+            loss = pol_loss + 0.01*val_loss
             print(f' percentage:{(batch_num/len(trainloader))*100:.2f}%, loss:{loss.item()}')
             run.log({'batch_loss':loss.item()})
             loss.backward()

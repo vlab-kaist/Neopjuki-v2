@@ -7,7 +7,7 @@ from fights.envs import PuoriborEnv
 from preprocess import preprocessor
 from preprocess import hashing_state
 from preprocess import generate_actions
-
+from shortest_length import shortest_movement
 
 class Node(object):
     def __init__(self, turn, state, action, parent):
@@ -85,30 +85,29 @@ class MCTS(object):
         actions = []
 
         prep_states = []
-        t = 0
-        for i, action in enumerate(self.actions_cache):
-            try:
-                state = self.env.step(node.state, node.turn, action)
-                turn = node.turn
-        
-                if sum(state.walls_remaining) == 0:
-                    checker = node.parent
-                    while checker != -1:
-                        if action == checker.action:
-                            t += 1
-                        if t > 2:
-                            raise ValueError
 
-                        checker = checker.parent
+        if sum(node.state.walls_remaining) == 0:
+            action = shortest_movement(node.state, node.turn)
+            state = self.env.step(node.state, node.turn, action)
+            pis.append(torch.Tensor([1.0]))
+            states.append(state)
+            actions.append(action)
+        else:
+            for i, action in enumerate(self.actions_cache):
+                try:
+                    state = self.env.step(node.state, node.turn, action)
+                    turn = node.turn
+                    pis.append(pol[i])
+                    states.append(state)
+                    actions.append(action)
                     
-                states.append(state)
-                actions.append(action)
-                pis.append(pol[i])
+                except ValueError:
+                    pass
 
-
-            except ValueError:
-                pass
         
+        
+        
+
         for i, state in enumerate(states):
             new_node = Node((node.turn+1)%2, state, actions[i], node)
             new_node.pi = pis[i].item()
