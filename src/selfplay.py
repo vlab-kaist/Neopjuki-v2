@@ -103,13 +103,4 @@ if __name__ == '__main__':
     snum = conf['mcts']['sim_num']
     stmp = load_model(conf)
 
-    states, pis, zs = selfplay(stmp, 2, snum, "../../plays/cache.h5")
-
-    for state in states:
-        print(state.shape)
-
-    for pi in pis:
-        print(pi.shape)
-
-    for z in zs:
-        print(z.shape)
+    selfplay(stmp, 1, snum, "../../plays/cache.h5")

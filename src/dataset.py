@@ -41,12 +41,35 @@ class SupervisedDataset(Dataset):
         y = self.y_data[idx]
         return x, y
 
+class SelfplayDataset(Dataset):
+    def __init__(self, cpath="../../"):
+        h5 = "cache.h5"
+
+        if os.path.exists(cpath+h5):
+            hf = h5py.File(cpath+h5, 'r')
+            self.state = hf["state"]
+            self.policy = hf["policy"]
+            self.value = hf["value"]
+            
+        else:
+            raise ValueError
+
+    def __len__(self):
+        return len(self.state)
+
+    def __getitem__(self, idx):
+        s = self.state[idx]
+        p = self.policy[idx]
+        z = self.value[idx]
+        return s, p, z
+
 if __name__ == '__main__':
     pdataset = SupervisedDataset("../../")
     traindataloader = DataLoader(pdataset)
-    for i, (state, action) in enumerate(traindataloader):
+    sdataset = SelfplayDataset("../../plays/")
+    straindataloader = DataLoader(sdataset)
+    for i, (state, policy, value) in enumerate(straindataloader):
         print(state)
-        print(action)
-            
-        
-        breakpoint()
+        print(policy)
+        print(value)
+        break

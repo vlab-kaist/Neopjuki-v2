@@ -24,3 +24,10 @@ pretrain:
   epochs: 50
   batch_size: 2048
   saving_point: '../../checkpoints/pretrained/'
+
+
+train:
+  lr: 1e-6
+  epochs: 10
+  batch_size: 2048
+  saving_point: '../../checkpoints/selfplayed/'
