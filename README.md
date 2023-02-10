@@ -15,7 +15,7 @@
 
 - [X] parallelized simulate function
 
-- [ ] pretrained policy function for making faster iteration on simulate function
+- [X] pretrained policy function for making faster iteration on simulate function
 
 - [X] parallelized data caching function for faster file upload
 
