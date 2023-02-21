@@ -48,8 +48,7 @@ class MCTS(object):
         q_val = 0
         u_val = 0
         if add_noise:
-            m = torch.distributions.dirichlet.Dirichlet(torch.Tensor([0.03]))
-            u_val = (self.temp*((1-0.25)*node.pi + 0.25*m.sample())*(math.sqrt(node.parent.visits)/(1+node.visits))).item()
+            u_val = (self.temp*((1-0.25)*node.pi*0.25*random.random())*(math.sqrt(node.parent.visits)/(1+node.visits)))
         else:
             u_val = self.temp*node.pi*(math.sqrt(node.parent.visits)/(1+node.visits))
 
@@ -68,7 +67,10 @@ class MCTS(object):
             keys = []
             uct_val = []
             for key, val in current.childs.items():
-                uct_val.append(self.UCT(val))
+                if current.wins == 0:
+                    uct_val.append(self.UCT(val, add_noise=True))
+                else:
+                    uct_val.append(self.UCT(val))
                 keys.append(key)
             current = current.childs[keys[torch.Tensor(uct_val).argmax().item()]]
             current.visits += 1
@@ -93,10 +95,20 @@ class MCTS(object):
             states.append(state)
             actions.append(action)
         else:
+            t = 0
             for i, action in enumerate(self.actions_cache):
                 try:
                     state = self.env.step(node.state, node.turn, action)
                     turn = node.turn
+                    checker = node.parent
+                    while checker != -1:
+                        if action == checker.action:
+                            t += 1
+                        if t >2:
+                            raise ValueError
+
+                        checker = checker.parent
+                        
                     pis.append(pol[i])
                     states.append(state)
                     actions.append(action)

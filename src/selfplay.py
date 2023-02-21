@@ -61,11 +61,12 @@ def selfplay(stmp, play_num, snum, cache_name):
             for i in tqdm(range(snum)):
                 leaf = tr.select()
                 prep_states, nodes = tr.expand(leaf)
+                
                 for node in nodes:
                     if node.state.done == True:
                         tr.backpropagate(node, 1)
                     else:
-                        _, val = tr.stm(torch.Tensor(preprocessor(node.state, (node.turn+1)%2)).unsqueeze(0).to(tr.dev))
+                        _ , val = tr.stm(torch.Tensor(preprocessor(node.state, (node.turn+1)%2)).unsqueeze(0).to(tr.dev))
                         if val >= 0:
                             tr.backpropagate(node, 1)
                         elif val < 0:
