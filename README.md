@@ -9,7 +9,7 @@
 
 - [X] Add hashing_state function in preprocess.py to index much faster
 
-- [ ] Set hydra configuration for all files
+- [X] Set hydra configuration for all files
 
 - [X] MCTS
 
@@ -19,7 +19,7 @@
 
 - [X] parallelized data caching function for faster file upload
 
-- [ ] Experiments stuff 
+- [X] Experiments stuff 
 
 ## Acknowledgements
 
